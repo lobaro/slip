@@ -5,7 +5,6 @@ import (
 	"io"
 )
 
-// Implements io.Reader, io.Writer
 type SlipReader struct {
 	r io.Reader
 }
