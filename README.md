@@ -20,7 +20,7 @@ Read Packets
 	reader := slip.NewReader(bytes.NewReader(data))
 	packet, isPrefix, err := reader.ReadPacket()
 
-	// packet == 1, 2, 3
+	// packet == [1, 2, 3]
 	// isPrefix == false
 	// err == io.EOF
 ```
