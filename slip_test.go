@@ -60,7 +60,6 @@ func eqBytes(a, b []byte) bool {
 	return true
 }
 
-
 func TestRead(t *testing.T) {
 	for i, d := range readData {
 		r := NewReader(bytes.NewReader(d.data))
@@ -80,6 +79,40 @@ func TestRead(t *testing.T) {
 		if !eqBytes(p, d.expected) {
 			t.Error(strconv.Itoa(i), "Expected data", d.expected, "but got", p)
 		}
+	}
+}
+
+func TestReadMultipart(t *testing.T) {
+	part1 := []byte{1, 2, 3}
+
+	buf := &bytes.Buffer{}
+	buf.Write(part1)
+
+	r := NewReader(buf)
+	p, isPrefix, err := r.ReadPacket()
+
+	if err != io.EOF {
+		t.Error("Expected error", io.EOF, "but got", err)
+	}
+	if !isPrefix {
+		t.Error("Expected isPrefix", true, "but got", isPrefix)
+	}
+	if !eqBytes(p, part1) {
+		t.Error("Expected data", part1, "but got", p)
+	}
+
+	part2 := []byte{1, 2, 3, END}
+	buf.Write(part2)
+	p, isPrefix, err = r.ReadPacket()
+	
+	if err != nil {
+		t.Error("Expected error", nil, "but got", err)
+	}
+	if isPrefix {
+		t.Error("Expected isPrefix", false, "but got", isPrefix)
+	}
+	if !eqBytes(p, part2[:len(part2) - 1]) {
+		t.Error("Expected data", part2, "but got", p)
 	}
 }
 
