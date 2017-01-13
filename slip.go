@@ -26,10 +26,10 @@ func NewWriter(writer io.Writer) *SlipWriter {
 }
 
 const (
-	END = 0300 /* indicates end of packet */
-	ESC = 0333 /* indicates byte stuffing */
-	ESC_END = 0334 /* ESC ESC_END means END data byte */
-	ESC_ESC = 0335 /* ESC ESC_ESC means ESC data byte */
+	END = 0300 /* 0xC0 indicates end of packet */
+	ESC = 0333 /* 0xDB, indicates byte stuffing */
+	ESC_END = 0334 /* 0xDC, ESC ESC_END means END data byte */
+	ESC_ESC = 0335 /* 0xDD, ESC ESC_ESC means ESC data byte */
 )
 
 func (s *SlipWriter) WritePacket(p []byte) error {
