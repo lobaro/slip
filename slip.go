@@ -3,41 +3,48 @@ package slip
 import (
 	"bytes"
 	"io"
+	"sync"
 )
 
-type SlipReader struct {
-	r io.Reader
+type Reader struct {
+	mu sync.Mutex
+	r  io.Reader
 }
 
-func NewReader(reader io.Reader) *SlipReader {
-	return &SlipReader{
-		r: reader,
+func NewReader(reader io.Reader) *Reader {
+	return &Reader{
+		mu: sync.Mutex{},
+		r:  reader,
 	}
 }
 
-type SlipWriter struct {
-	w io.Writer
+type Writer struct {
+	mu sync.Mutex
+	w  io.Writer
 }
 
-func NewWriter(writer io.Writer) *SlipWriter {
-	return &SlipWriter{
-		w: writer,
+func NewWriter(writer io.Writer) *Writer {
+	return &Writer{
+		mu: sync.Mutex{},
+		w:  writer,
 	}
 }
 
 const (
-	END = 0300 /* 0xC0 indicates end of packet */
-	ESC = 0333 /* 0xDB, indicates byte stuffing */
+	END     = 0300 /* 0xC0 indicates end of packet */
+	ESC     = 0333 /* 0xDB, indicates byte stuffing */
 	ESC_END = 0334 /* 0xDC, ESC ESC_END means END data byte */
 	ESC_ESC = 0335 /* 0xDD, ESC ESC_ESC means ESC data byte */
 )
 
-func (s *SlipWriter) WritePacket(p []byte) error {
+func (s *Writer) WritePacket(p []byte) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	buf := &bytes.Buffer{}
 
 	/* send an initial END character to flush out any data that may
 	* have accumulated in the receiver due to line noise
-	*/
+	 */
 	if err := buf.WriteByte(END); err != nil {
 		return err
 	}
@@ -46,7 +53,7 @@ func (s *SlipWriter) WritePacket(p []byte) error {
 	 * sequence
 	 */
 	for _, b := range p {
-		switch (b) {
+		switch b {
 		/* if it's the same code as an END character, we send a
 		 * special two character code so as not to make the
 		 * receiver think we sent an END
@@ -91,11 +98,13 @@ func (s *SlipWriter) WritePacket(p []byte) error {
 }
 
 /* RECV_PACKET: receives a packet into the buffer located at "p".
-    *      If more than len bytes are received, the packet will
-    *      be truncated.
-    *      Returns the number of bytes stored in the buffer.
-    */
-func (s *SlipReader) ReadPacket() (p []byte, isPrefix bool, err error) {
+ *      If more than len bytes are received, the packet will
+ *      be truncated.
+ *      Returns the number of bytes stored in the buffer.
+ */
+func (s *Reader) ReadPacket() (p []byte, isPrefix bool, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	n := 0
 	buf := &bytes.Buffer{}
 	readBuf := make([]byte, 1)
@@ -105,11 +114,10 @@ func (s *SlipReader) ReadPacket() (p []byte, isPrefix bool, err error) {
 	 * Make sure not to copy them into the packet if we
 	 * run out of room.
 	 */
-	for
-	{
+	for {
 		/* get a character to process
 		 */
-		n, err = s.r.Read(readBuf);
+		n, err = s.r.Read(readBuf)
 		if n == 0 || err != nil {
 			isPrefix = true
 			p = buf.Bytes()
@@ -118,7 +126,7 @@ func (s *SlipReader) ReadPacket() (p []byte, isPrefix bool, err error) {
 
 		/* handle bytestuffing if necessary
 		 */
-		switch(readBuf[0]) {
+		switch readBuf[0] {
 
 		/* if it's an END character then we're done with
 		 * the packet
@@ -134,9 +142,9 @@ func (s *SlipReader) ReadPacket() (p []byte, isPrefix bool, err error) {
 			if buf.Len() > 0 {
 				p = buf.Bytes()
 				isPrefix = false
-				return;
+				return
 			} else {
-				continue;
+				continue
 			}
 
 		/* if it's the same code as an ESC character, wait
@@ -144,7 +152,7 @@ func (s *SlipReader) ReadPacket() (p []byte, isPrefix bool, err error) {
 		 * what to store in the packet based on that.
 		 */
 		case ESC:
-			n, err = s.r.Read(readBuf);
+			n, err = s.r.Read(readBuf)
 
 			if n == 0 || err != nil {
 				isPrefix = true
@@ -157,11 +165,11 @@ func (s *SlipReader) ReadPacket() (p []byte, isPrefix bool, err error) {
 			 * seems to be to leave the byte alone and
 			 * just stuff it into the packet
 			 */
-			switch (readBuf[0]) {
+			switch readBuf[0] {
 			case ESC_END:
-				readBuf[0] = END;
+				readBuf[0] = END
 			case ESC_ESC:
-				readBuf[0] = ESC;
+				readBuf[0] = ESC
 			}
 		}
 
