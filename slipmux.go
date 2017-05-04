@@ -6,7 +6,7 @@ import (
 )
 
 type SlipMuxReader struct {
-	r *SlipReader
+	r *Reader
 }
 
 func NewSlipMuxReader(reader io.Reader) *SlipMuxReader {
@@ -16,7 +16,7 @@ func NewSlipMuxReader(reader io.Reader) *SlipMuxReader {
 }
 
 type SlipMuxWriter struct {
-	w *SlipWriter
+	w *Writer
 }
 
 func NewSlipMuxWriter(writer io.Writer) *SlipMuxWriter {
@@ -27,15 +27,15 @@ func NewSlipMuxWriter(writer io.Writer) *SlipMuxWriter {
 
 const (
 	FRAME_IPV4_START = 0x45
-	FRAME_IPV4_END = 0x4f
+	FRAME_IPV4_END   = 0x4f
 	FRAME_IPV6_START = 0x60
-	FRAME_IPV6_END = 0x6f
+	FRAME_IPV6_END   = 0x6f
 )
 
 const (
-	FRAME_UNKNOWN = 0x00
+	FRAME_UNKNOWN    = 0x00
 	FRAME_DIAGNOSTIC = 0x0a // New Line Character
-	FRAME_COAP = 0xa9
+	FRAME_COAP       = 0xa9
 )
 
 func IsIpFrame(frame byte) bool {
@@ -43,11 +43,11 @@ func IsIpFrame(frame byte) bool {
 }
 
 func IsIpv6Frame(frame byte) bool {
-	return (frame >= FRAME_IPV6_START && frame <= FRAME_IPV6_END);
+	return (frame >= FRAME_IPV6_START && frame <= FRAME_IPV6_END)
 }
 
 func IsIpv4Frame(frame byte) bool {
-	return (frame >= FRAME_IPV4_START && frame <= FRAME_IPV4_END);
+	return (frame >= FRAME_IPV4_START && frame <= FRAME_IPV4_END)
 }
 
 // WritePacket writes a SlipMux packet with the given Frame prefix
@@ -58,7 +58,7 @@ func (s *SlipMuxWriter) WritePacket(frame byte, p []byte) error {
 	if !IsIpFrame(frame) {
 		p = append([]byte{frame}, p...)
 	}
-	
+
 	if frame == FRAME_COAP {
 		p = AppendFcs16(p, CalcFcs16(p))
 	}
@@ -87,7 +87,7 @@ func (s *SlipMuxReader) ReadPacket() ([]byte, byte, error) {
 		p, isPrefix, err := s.r.ReadPacket()
 		if err != nil && err != io.EOF {
 			// EOF does not return here and must be handled
-			// via Timeout in the application this is because 
+			// via Timeout in the application this is because
 			// some streams might return EOF even if there
 			// will be more data in future
 			return nil, 0, err
@@ -101,23 +101,23 @@ func (s *SlipMuxReader) ReadPacket() ([]byte, byte, error) {
 	res := buf.Bytes()
 
 	frameType := res[0]
-	
+
 	// Ignore packets with invalid frame types
 	if isInvalidFrame(frameType) {
 		return s.ReadPacket()
 	}
-	
+
 	if frameType == FRAME_COAP {
 		// smallest CoAP message is frameType + 4 byte + 2 byte CRC = 7 bytes
-		if len(res) < 7{
+		if len(res) < 7 {
 			return s.ReadPacket()
 		}
 
 		// Ignore packets with bad Checksum
-		if (!CheckFsc16(res)) {
+		if !CheckFsc16(res) {
 			return s.ReadPacket()
 		} else {
-			res = RemoveFcs16(res);
+			res = RemoveFcs16(res)
 		}
 	}
 

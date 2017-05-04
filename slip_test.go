@@ -1,10 +1,10 @@
 package slip
 
 import (
-	"testing"
 	"bytes"
 	"io"
 	"strconv"
+	"testing"
 )
 
 var readData = []struct {
@@ -104,14 +104,14 @@ func TestReadMultipart(t *testing.T) {
 	part2 := []byte{1, 2, 3, END}
 	buf.Write(part2)
 	p, isPrefix, err = r.ReadPacket()
-	
+
 	if err != nil {
 		t.Error("Expected error", nil, "but got", err)
 	}
 	if isPrefix {
 		t.Error("Expected isPrefix", false, "but got", isPrefix)
 	}
-	if !eqBytes(p, part2[:len(part2) - 1]) {
+	if !eqBytes(p, part2[:len(part2)-1]) {
 		t.Error("Expected data", part2, "but got", p)
 	}
 }
