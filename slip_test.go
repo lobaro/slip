@@ -60,7 +60,6 @@ func eqBytes(a, b []byte) bool {
 	return true
 }
 
-
 func TestRead(t *testing.T) {
 	for i, d := range readData {
 		r := NewReader(bytes.NewReader(d.data))
@@ -125,5 +124,134 @@ func TestWriteAndRead(t *testing.T) {
 		if !eqBytes(p, d.data) {
 			t.Error(strconv.Itoa(i), "Expected data", d.data, "but got", p)
 		}
+	}
+}
+
+
+// Encoded holds data that can be retrived via all interfaces
+// defined in the "encoding" package
+type EncodedBin struct {
+	data []byte
+}
+
+func (e *EncodedBin) MarshalBinary() (data []byte, err error) {
+	return e.data, nil
+}
+func (e *EncodedBin) UnmarshalBinary(data []byte) error {
+	e.data = data
+	return nil
+}
+
+// Encoded holds data that can be retrived via all interfaces
+// defined in the "encoding" package
+type EncodedText struct {
+	data []byte
+}
+
+func (e *EncodedText) MarshalText() (text []byte, err error) {
+	return e.data, nil
+}
+func (e *EncodedText) UnmarshalText(text []byte) error {
+	e.data = text
+	return nil
+}
+
+// Test the interfaces from the encoding package
+func TestEncodingInterfaces(t *testing.T) {
+	encBin := EncodedBin{data: []byte{1}}
+	buf := &bytes.Buffer{}
+	enc := NewEncoder(buf)
+	err := enc.Encode(encBin)
+	if err != nil {
+		t.Error(err)
+	}
+	expected := []byte{END, 1, END}
+	if !bytes.Equal(buf.Bytes(), expected) {
+		t.Error("Bytes not equal", expected, buf.Bytes())
+	}
+
+	encText := EncodedText{data: []byte{2}}
+	buf = &bytes.Buffer{}
+	enc = NewEncoder(buf)
+	err = enc.Encode(encText)
+	if err != nil {
+		t.Error(err)
+	}
+	expected = []byte{END, 2, END}
+	if !bytes.Equal(buf.Bytes(), expected) {
+		t.Error("Bytes not equal", expected, buf.Bytes())
+	}
+
+	buf = &bytes.Buffer{}
+	enc = NewEncoder(buf)
+	err = enc.Encode(byte(3))
+	if err != nil {
+		t.Error(err)
+	}
+	expected = []byte{END, 3, END}
+	if !bytes.Equal(buf.Bytes(), expected) {
+		t.Error("Bytes not equal", expected, buf.Bytes())
+	}
+
+	buf = &bytes.Buffer{}
+	enc = NewEncoder(buf)
+	err = enc.Encode([]byte{4})
+	if err != nil {
+		t.Error(err)
+	}
+	expected = []byte{END, 4, END}
+	if !bytes.Equal(buf.Bytes(), expected) {
+		t.Error("Bytes not equal", expected, buf.Bytes())
+	}
+}
+
+// Test the interfaces from the encoding package
+func TestDecodingInterfaces(t *testing.T) {
+	encBin := EncodedBin{}
+	buf := bytes.NewBuffer([]byte{END, 1, END})
+	enc := NewDecoder(buf)
+	err := enc.Decode(&encBin)
+	if err != nil {
+		t.Error(err)
+	}
+	expected := []byte{1}
+	if !bytes.Equal(encBin.data, expected) {
+		t.Error("Bytes not equal", expected, encBin.data)
+	}
+
+	encText := EncodedText{}
+	buf = bytes.NewBuffer([]byte{END, 2, END})
+	enc = NewDecoder(buf)
+	err = enc.Decode(&encText)
+	if err != nil {
+		t.Error(err)
+	}
+	expected = []byte{2}
+	if !bytes.Equal(encText.data, expected) {
+		t.Error("Bytes not equal", expected, encText.data)
+	}
+
+	target := []byte{}
+	buf = bytes.NewBuffer([]byte{END, 3, END})
+	enc = NewDecoder(buf)
+	err = enc.Decode(&target)
+	if err != nil {
+		t.Error(err)
+	}
+	expected = []byte{3}
+	if !bytes.Equal(target, expected) {
+		t.Error("Bytes not equal", expected, target)
+	}
+
+	target = []byte{}
+	buf = bytes.NewBuffer([]byte{END, 4, END})
+	enc = NewDecoder(buf)
+	err = enc.Decode([]byte{END, 4, END})
+	if err != nil {
+		t.Error(err)
+	}
+	expected = []byte{4}
+	if !bytes.Equal(target, expected) {
+		t.Error("Bytes not equal", expected, target)
 	}
 }

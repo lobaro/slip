@@ -10,8 +10,8 @@ type SlipReader struct {
 	r io.Reader
 }
 
-func NewReader(reader io.Reader) *SlipReader {
-	return &SlipReader{
+func NewReader(reader io.Reader) SlipReader {
+	return SlipReader{
 		r: reader,
 	}
 }
@@ -20,8 +20,8 @@ type SlipWriter struct {
 	w io.Writer
 }
 
-func NewWriter(writer io.Writer) *SlipWriter {
-	return &SlipWriter{
+func NewWriter(writer io.Writer) SlipWriter {
+	return SlipWriter{
 		w: writer,
 	}
 }
