@@ -45,16 +45,16 @@ func CalcFcs16(data []byte) uint16 {
 // Takes a already calculated FCS and adds more data on it
 func CalcFcs16WithInit(initialFcs uint16, data []byte) uint16 {
 	for _, b := range data {
-		initialFcs = (initialFcs >> 8) ^ fcstab[(initialFcs ^ uint16(b)) & 0xff]
+		initialFcs = (initialFcs >> 8) ^ fcstab[(initialFcs^uint16(b))&0xff]
 	}
 	return (initialFcs)
 }
 
 // append the Fcs value to an existing message
-func AppendFcs16(data[]byte, fcs uint16) []byte {
-	fcs ^= 0xffff // complement
-	data = append(data, byte(fcs & uint16(0x00ff))); /* least significant byte first */
-	data = append(data, byte((fcs >> 8) & uint16(0x00ff)));
+func AppendFcs16(data []byte, fcs uint16) []byte {
+	fcs ^= 0xffff                                 // complement
+	data = append(data, byte(fcs&uint16(0x00ff))) /* least significant byte first */
+	data = append(data, byte((fcs>>8)&uint16(0x00ff)))
 	return data
 }
 
@@ -63,6 +63,6 @@ func RemoveFcs16(dataWithCrc []byte) []byte {
 }
 
 func CheckFsc16(dataWithCrc []byte) bool {
-	trialfcs := CalcFcs16(dataWithCrc);
+	trialfcs := CalcFcs16(dataWithCrc)
 	return trialfcs == FCS_GOOD
 }

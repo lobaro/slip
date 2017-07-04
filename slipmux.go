@@ -43,11 +43,11 @@ func IsIpFrame(frame byte) bool {
 }
 
 func IsIpv6Frame(frame byte) bool {
-	return (frame >= FRAME_IPV6_START && frame <= FRAME_IPV6_END)
+	return frame >= FRAME_IPV6_START && frame <= FRAME_IPV6_END
 }
 
 func IsIpv4Frame(frame byte) bool {
-	return (frame >= FRAME_IPV4_START && frame <= FRAME_IPV4_END)
+	return frame >= FRAME_IPV4_START && frame <= FRAME_IPV4_END
 }
 
 // WritePacket writes a SlipMux packet with the given Frame prefix
