@@ -1,9 +1,9 @@
 package slip
 
 import (
-	"testing"
 	"bytes"
 	"strconv"
+	"testing"
 )
 
 var readDataMux = []struct {
@@ -26,10 +26,9 @@ var readDataMux = []struct {
 	{[]byte{END, FRAME_COAP, 1, 2, END, FRAME_DIAGNOSTIC, 'x', END}, []byte{'x'}, FRAME_DIAGNOSTIC, nil},
 	{[]byte{END, FRAME_COAP, 1, 2, 3, 4, 5, END, FRAME_DIAGNOSTIC, 'x', END}, []byte{'x'}, FRAME_DIAGNOSTIC, nil},
 	// CoAP msg with valid checksum - [152 177] is the checksum for [FRAME_COAP, 1 2 3 4]
-	{[]byte{END, FRAME_COAP, 1, 2, 3, 4,152, 177, END, FRAME_DIAGNOSTIC, 0, END}, []byte{1, 2, 3, 4}, FRAME_COAP, nil},
+	{[]byte{END, FRAME_COAP, 1, 2, 3, 4, 152, 177, END, FRAME_DIAGNOSTIC, 0, END}, []byte{1, 2, 3, 4}, FRAME_COAP, nil},
 	// CoAP msg with invalid checksum - [145 57] is the checksum for [1 2 3 4]
 	{[]byte{END, FRAME_COAP, 1, 2, 3, 4, 145, 57, END, FRAME_DIAGNOSTIC, 0, END}, []byte{0}, FRAME_DIAGNOSTIC, nil},
-
 
 	// Unknown frame is just accepted
 	{[]byte{1, 2, 3, END}, []byte{2, 3}, 1, nil},
@@ -48,7 +47,6 @@ var readDataMux = []struct {
 	{[]byte{ESC_ESC, 2, 3, END, FRAME_DIAGNOSTIC, 'x', END}, []byte{2, 3}, ESC_ESC, nil},
 	// data "ESC_END" is NOT ignored when used as FrameType
 	{[]byte{ESC_END, 2, 3, END, FRAME_DIAGNOSTIC, 'x', END}, []byte{2, 3}, ESC_END, nil},
-
 
 	// Non terminated data would lead to blocking read!
 }
@@ -74,10 +72,10 @@ var writeDataMux = []struct {
 	{FRAME_IPV4_END, []byte{FRAME_IPV4_END, 1, 2, 3}, []byte{END, FRAME_IPV4_END, 1, 2, 3, END}, nil},
 	{FRAME_IPV6_START, []byte{FRAME_IPV6_START, 1, 2, 3}, []byte{END, FRAME_IPV6_START, 1, 2, 3, END}, nil},
 	{FRAME_IPV6_END, []byte{FRAME_IPV6_END, 1, 2, 3}, []byte{END, FRAME_IPV6_END, 1, 2, 3, END}, nil},
-	
+
 	// CoAP packets get checksum
-	{FRAME_COAP, []byte{1, 2, 3, 4}, []byte{END, FRAME_COAP, 1, 2, 3, 4 ,152, 177, END}, nil},
-	
+	{FRAME_COAP, []byte{1, 2, 3, 4}, []byte{END, FRAME_COAP, 1, 2, 3, 4, 152, 177, END}, nil},
+
 	// Unknown types are handled like all non ip packets
 	{1, []byte{1, 2, 3, 4}, []byte{END, 1, 1, 2, 3, 4, END}, nil},
 }
