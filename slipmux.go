@@ -114,6 +114,7 @@ func (s *SlipMuxReader) ReadPacket() ([]byte, byte, error) {
 		}
 
 		// Ignore packets with bad Checksum
+		// Checksum including the frame type byte "0xA9"
 		if !CheckFsc16(res) {
 			return s.ReadPacket()
 		} else {

@@ -5,6 +5,21 @@ import (
 	"testing"
 )
 
+func TestCoapFcs(t *testing.T) {
+	// Last 2 bytes are the CRC
+	packet := []byte{100, 69, 0, 1, 1, 186, 27, 2, 255, 43, 228, 64, 44}
+
+	if !CheckFsc16(packet) {
+		t.Error("Bad CRC")
+	}
+
+	expected := CalcFcs16(packet)
+
+	if expected != FCS_GOOD {
+		t.Errorf("Expected FCS %02x but got %02x", FCS_GOOD, expected)
+	}
+}
+
 func TestFcs(t *testing.T) {
 	cp := []byte{1, 2, 3, 4, 5}
 
