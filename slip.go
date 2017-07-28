@@ -2,6 +2,8 @@ package slip
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"sync"
 )
@@ -93,7 +95,11 @@ func (s *Writer) WritePacket(p []byte) error {
 		return err
 	}
 
-	_, err := s.w.Write(buf.Bytes())
+	n, err := s.w.Write(buf.Bytes())
+	//logrus.WithError(err).WithField("n", n).WithField("Buf", fmt.Sprintf("%#v", buf.Bytes())).Info("slipmux out")
+	if n != buf.Len() {
+		return errors.New(fmt.Sprintf("Did not send all bytes %d/%d", n, buf.Len()))
+	}
 	return err
 }
 
