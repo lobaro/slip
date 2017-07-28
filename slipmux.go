@@ -86,8 +86,8 @@ func (s *SlipMuxReader) ReadPacket() ([]byte, byte, error) {
 	for {
 		p, isPrefix, err := s.r.ReadPacket()
 
-		if err != nil && (!isPrefix || err != io.EOF) {
-			// EOF does not return here when more is expected (!isPrefix) and must be handled
+		if err != nil && err != io.EOF {
+			// EOF does not return here and must be handled
 			// via Timeout in the application this is because
 			// some streams might return EOF even if there
 			// will be more data in future
